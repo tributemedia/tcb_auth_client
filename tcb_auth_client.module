@@ -13,8 +13,8 @@
 function tcb_auth_client_permission() {
   return array(
     'administer tcb client' => array(
-      'title' => t('Administer TCB User Management module'),
-      'description' => t('Perform administration tasks for TCB User Management module.'),
+      'title' => t('Administer TCB User Client module'),
+      'description' => t('Perform administration tasks for TCB User Client module.'),
     ),
   );
 }
@@ -24,8 +24,8 @@ function tcb_auth_client_permission() {
   **/
 function tcb_auth_client_menu() {
     $items['admin/config/people/tcb']=array(
-        'title' => 'TCB User Management',
-        'description' => 'TCB User Management Configuration',
+        'title' => 'TCB User Client Settings',
+        'description' => 'TCB User Client Settings',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('tcb_auth_client_admin_settings'),
         'access arguments' => array('administer tcb client'),
@@ -38,7 +38,7 @@ function tcb_auth_client_menu() {
  * */
 function tcb_auth_client_admin_settings() {
     $form['tcbclient_uid'] = array(
-        '#title' => t('Logged in user uid'),
+        '#title' => t('Logged in user name'),
         '#description' => t('When the user logs in, what user on this site do you want them to be logged in as?'),
         '#default_value' => variable_get('tcbclient_uid', ''),
         '#type' => 'textfield',
@@ -46,7 +46,7 @@ function tcb_auth_client_admin_settings() {
     );
     $form['tcbclient_url'] = array(
         '#title' => t('Server URL'),
-        '#description' => t('This is the TCB authentication server, this requires fully qualified URL.'),
+        '#description' => t('This is the URL where the TCB authentication server can be found, this requires fully qualified URL.'),
         '#default_value' => variable_get('tcbclient_url', ''),
         '#type' => 'textfield',
     );
@@ -85,12 +85,12 @@ function tcb_auth_client_login_validate($form, &$form_state) {
             $account = user_load_by_name(array('name' => variable_get('tcbclient_uid', '')));
             $tokens['@this_user'] = $account->name;
             $user = $account;
-            watchdog('user_management', '@username has successfully logged in by TCB User Management as user @this_user', $tokens);
+            watchdog('user_management', '@username has successfully logged in by TCB User Client as user @this_user', $tokens);
             user_login_finalize($form_values);
             drupal_goto('user');
         }
         else {
-            watchdog('user_management', '@username has attempted to log in by TCB User Management', $tokens);
+            watchdog('user_management', '@username has attempted to log in by TCB User Client', $tokens);
         }
     }
 }
