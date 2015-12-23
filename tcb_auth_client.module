@@ -28,7 +28,7 @@ function tcb_auth_client_menu() {
         'description' => 'TCB User Management Configuration',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('tcb_auth_client_admin_settings'),
-        'access arguments' => array('admin tcb client'),
+        'access arguments' => array('administer tcb client'),
     );
     return $items;    
 }
