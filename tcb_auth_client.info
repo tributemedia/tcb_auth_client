@@ -2,7 +2,7 @@
 name=TCB User Client
 description=Validate login information from your authentication server and log the user in as a given user
 package=Administration
-core=7.x
-version=7.x-1.4
+core=6.x
+version=6.x-1.4
 configure=admin/config/people/tcb
 files[]=tcb_auth_client.module
