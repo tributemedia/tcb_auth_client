@@ -5,4 +5,4 @@ package=Administration
 core=7.x
 version=7.x-1.4
 configure=admin/config/people/tcb
-files[]=tcb_auth_client.module
+files[]=tcbusermanagementclient.module
