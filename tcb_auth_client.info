@@ -1,8 +1,0 @@
-; $Id$
-name=TCB User Client
-description=Validate login information from your authentication server and log the user in as a given user
-package=Administration
-core=7.x
-version=7.x-1.4
-configure=admin/config/people/tcb
-files[]=tcbusermanagementclient.module

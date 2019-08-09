@@ -1,0 +1,6 @@
+name: TCB Client Module
+description: Customizes OAuth functionality based on TCB server configuration.
+package: TCB
+type: module
+core: 8.x
+version: 8.x-1.0-dev
