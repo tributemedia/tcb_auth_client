@@ -1,5 +1,5 @@
 tcb_auth_client.settings:
-  path: '/admin/structure/tcb_auth_client/settings'
+  path: '/admin/config/system/tcb-auth-client'
   defaults:
     _form: '\Drupal\tcb_auth_client\Form\TCBClientSettingsForm'
     _title: 'TCB Client Settings'

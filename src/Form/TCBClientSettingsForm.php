@@ -32,8 +32,6 @@ class TCBClientSettingsForm extends ConfigFormBase {
   public function buildForm(array $form, FormStateInterface $formState = null) {
     
     $config = new TCBConfigManager();
-    ksm($formState);
-    ksm($config->getServerURL());
     $form['server_url'] = [
       '#type' => 'textfield',
       '#title' => 'TCB Server URL',
