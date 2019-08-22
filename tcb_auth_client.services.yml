@@ -1,0 +1,7 @@
+services:
+  tcb_auth_client.exception.subscriber:
+    class: Drupal\tcb_auth_client\EventSubscriber\ExceptionEventSubscriber
+    arguments: ['@logger.factory']
+    tags:
+      - { name: event_subscriber }
+      
