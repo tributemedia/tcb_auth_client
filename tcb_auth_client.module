@@ -1,0 +1,13 @@
+<?php
+
+use Drupal\tcb_auth_client\TCBServerConnectionWorker;
+
+/**
+ * Implements hook_rebuild to run code after cache clear
+ */
+function tcb_auth_client_rebuild() {
+  
+  $connector = new TCBServerConnectionWorker();
+  $connector->getServerInfo(false);
+  
+}

@@ -86,7 +86,8 @@ class TCBServerConnectionWorker {
     $connection = \Drupal::httpClient();
     $requestURL = $protocol . '://' . $server . 
       '/api/v1/site?_format=json&name=' .
-      $this->host;
+      $this->host . 
+      '&time=' . time();
     
     return $connection->request('GET', $requestURL);
     
