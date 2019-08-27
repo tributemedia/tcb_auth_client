@@ -4,4 +4,9 @@ services:
     arguments: ['@logger.factory']
     tags:
       - { name: event_subscriber }
+  
+  tcb_auth_client.route_subscriber:
+    class: '\Drupal\tcb_auth_client\Routing\RouteSubscriber'
+    tags:
+      - { name: 'event_subscriber' }
       
