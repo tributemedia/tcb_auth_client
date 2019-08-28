@@ -20,6 +20,7 @@ use Drupal\social_auth\SettingsTrait;
 use Drupal\user\UserInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Drupal\social_auth\User\UserManager;
+use Drupal\tcb_auth_client\TCBConfigManager;
 
 /**
  * Defines a customized instance of social auth's UserManager class
@@ -33,6 +34,7 @@ class TCBUserManager extends UserManager {
       $theParent->entityFieldManager, $theParent->transliteration, 
       $theParent->languageManager, $theParent->eventDispatcher, 
       $theParent->token);
+    //$this->setPluginId('tcb_auth_client');
 
   }
 
@@ -57,6 +59,53 @@ class TCBUserManager extends UserManager {
       return FALSE;
     }
 
+    // Check email domain to make sure it is allowed for account creation
+    $domain = explode('@', $email)[1];
+    $tcbConfig = new TCBConfigManager();
+    $tcbInfo = json_decode($tcbConfig->getSiteInfo());
+    
+    if(!empty($tcbInfo->valid_domains)) {
+      
+      $domainIsValid = FALSE;
+      
+      // Loop over each valid domain and if it matches the domain
+      // of the user trying to create an account, the user is allowed
+      // to create an account on the site
+      foreach($tcbInfo->valid_domains as $validDomain) {
+        
+        if($domain == $validDomain) {
+          
+          $domainIsValid = TRUE;
+          break;
+          
+        }
+        
+      }
+      
+      if($domainIsValid == FALSE) {
+        
+        $this->failUserCreation();
+        
+        return FALSE;
+        
+      }
+      else {
+        
+        $this->loggerFactory->get($this->getPluginId())
+          ->notice('User with VALID domain attempted to create account.');
+        
+      }
+      
+    }
+    // If no valid domains are specified, fail any attempt to create
+    // a user
+    else {
+      
+      $this->failUserCreation();
+      return FALSE;
+      
+    }
+    
     // Check if site configuration allows new users to register.
     /*
     if ($this->isRegistrationDisabled()) {
@@ -109,6 +158,18 @@ class TCBUserManager extends UserManager {
     $this->messenger->addError($this->t('You could not be authenticated,' . 
       ' please contact the administrator.'));
     return FALSE;
+    
+  }
+  
+  /**
+   * Helper method to print message for failed user creation 
+   */
+  private function failUserCreation() {
+    
+    $this->loggerFactory->get($this->getPluginId())
+      ->warning('User with invalid domain attempted to create account.');
+    $this->messenger->addError('You are not allowed to create an ' . 
+      'account on this site.');
     
   }
 }
