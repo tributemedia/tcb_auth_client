@@ -13,8 +13,9 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Transliteration\PhpTransliteration;
 use Drupal\Core\Utility\Token;
 use Drupal\social_api\User\UserManager as SocialApiUserManager;
+use Drupal\social_auth\User\SocialAuthUserInterface;
 use Drupal\social_auth\Event\SocialAuthEvents;
-use Drupal\social_auth\Event\SocialAuthUserEvent;
+use Drupal\social_auth\Event\UserEvent;
 use Drupal\social_auth\Event\SocialAuthUserFieldsEvent;
 use Drupal\social_auth\SettingsTrait;
 use Drupal\user\UserInterface;
@@ -50,15 +51,11 @@ class TCBUserManager extends UserManager {
    *   Drupal user account if user was created
    *   False otherwise
    */
-  public function createUser($name, $email) {
-    // Make sure we have everything we need.
-    if (!$name) {
-      $this->loggerFactory
-        ->get($this->getPluginId())
-        ->error('Failed to create user. Name: @name', ['@name' => $name]);
-      return FALSE;
-    }
+  public function createUser(SocialAuthUserInterface $user) {
 
+    $name = $user->getName();
+    $email = $user->getEmail();
+  
     // Check email domain to make sure it is allowed for account creation
     $domain = explode('@', $email)[1];
     $tcbConfig = new TCBConfigManager();
@@ -125,14 +122,23 @@ class TCBUserManager extends UserManager {
     // Try to save the new user account.
     try {
       // Initializes the user fields.
-      $fields = $this->getUserFields($name, $email, $langcode);
+      $fields = $this->getUserFields($user, $langcode);
 
       /** @var \Drupal\user\Entity\User $new_user */
       $new_user = $this->entityTypeManager
         ->getStorage('user')
         ->create($fields);
-
+        
       $new_user->save();
+      
+      // If the newly created user is blocked by default, unblock
+      if($new_user->isBlocked()) {
+        $this->loggerFactory
+          ->get($this->getPluginId())
+          ->notice('New user blocked, unblocking...');
+        $new_user->activate();
+        $new_user->save();
+      }
 
       $this->loggerFactory
         ->get($this->getPluginId())
@@ -142,7 +148,7 @@ class TCBUserManager extends UserManager {
         ]);
 
       // Dispatches SocialAuthEvents::USER_CREATED event.
-      $event = new SocialAuthUserEvent($new_user, $this->getPluginId());
+      $event = new UserEvent($new_user, $this->getPluginId(), $user);
       $this->eventDispatcher
         ->dispatch(SocialAuthEvents::USER_CREATED, $event);
 

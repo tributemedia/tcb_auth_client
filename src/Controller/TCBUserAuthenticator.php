@@ -14,6 +14,7 @@ use Drupal\social_auth\Event\SocialAuthEvents;
 use Drupal\social_auth\Event\SocialAuthUserEvent;
 use Drupal\social_auth\SettingsTrait;
 use Drupal\social_auth\SocialAuthDataHandler;
+use Drupal\social_auth\User\SocialAuthUser;
 use Drupal\user\UserInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -96,9 +97,10 @@ class TCBUserAuthenticator extends UserAuthenticator {
       }
     }
 
+    $user = new SocialAuthUser($name, $email, $provider_user_id, $token, $picture_url, $data);
+    
     // At this point, create a new user.
-    $drupal_user = $this->userManager->createNewUser($name, $email, 
-      $provider_user_id, $token, $picture_url, $data);
+    $drupal_user = $this->userManager->createNewUser($user);
 
     $this->authenticateNewUser($drupal_user);
 
