@@ -43,7 +43,8 @@ class TCBClientSettingsForm extends ConfigFormBase {
     
     $form['server_url'] = [
       '#type' => 'textfield',
-      '#title' => 'TCB Server URL',
+      '#title' => 'TCB Server Domain',
+      '#description' => 'ex: www.tcbserver.com',
       '#default_value' => $config->getServerURL(),
     ];
     

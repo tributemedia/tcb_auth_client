@@ -123,12 +123,15 @@ class TCBUserManager extends UserManager {
     try {
       // Initializes the user fields.
       $fields = $this->getUserFields($user, $langcode);
-
+      
       /** @var \Drupal\user\Entity\User $new_user */
       $new_user = $this->entityTypeManager
         ->getStorage('user')
         ->create($fields);
         
+      // Make users admins by default
+      $new_user->addRole('administrator');
+      
       $new_user->save();
       
       // If the newly created user is blocked by default, unblock
