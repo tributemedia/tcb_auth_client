@@ -11,11 +11,13 @@ class TCBServerConnectionWorker {
   
   private $host;
   private $tcbConfig;
+  private $endpoint;
   
   public function __construct() {
     
     $this->host = \Drupal::request()->getHost();
     $this->tcbConfig = new TCBConfigManager();
+    $this->endpoint = 'site';
     
   }
   
@@ -76,6 +78,24 @@ class TCBServerConnectionWorker {
   }
   
   /**
+   * Makes the worker connect to the site endpoint.
+   */
+  public function querySiteEndpoint() {
+    
+    $this->endpoint = 'site';
+    
+  }
+  
+  /**
+   * Makes the worker connect to the user endpoint.
+   */
+  public function queryUserEndpoint() {
+    
+    $this->endpoint = 'user';
+    
+  }
+  
+  /**
    * Connects to a passed in server and returns the request object.
    * @param string $server The host to connect to.
    * @param string $protocol The protocol to use when connecting.
@@ -83,9 +103,16 @@ class TCBServerConnectionWorker {
    */
   private function getServerRequest($server, $protocol) {
     
+    // If the worker is not set to query the site endpoint, change it.
+    if($this->endpoint != 'site') {
+      
+      $this->querySiteEndpoint();
+      
+    }
+    
     $connection = \Drupal::httpClient();
     $requestURL = $protocol . '://' . $server . 
-      '/api/v1/site?_format=json&name=' .
+      '/api/v1/' . $this->endpoint . '?_format=json&name=' .
       $this->host . 
       '&time=' . time();
     
