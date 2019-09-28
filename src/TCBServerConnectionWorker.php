@@ -78,6 +78,32 @@ class TCBServerConnectionWorker {
   }
   
   /**
+   * Gets the information about a user from TCB Server based on the 
+   * email address passed in. The information is returned in the form of
+   * a JSON string.
+   * @param string $email The user's email to query.
+   * @return JSONObject
+   */
+  public function getUserInfo($email) {
+    
+    $server = $this->tcbConfig->getServerURL();
+    $protocol = $this->tcbConfig->getServerProtocol();
+      
+    if(empty($server)) {
+        
+      \Drupal::logger('tcb_auth_client')
+        ->error('Attempt to connect to server with no valid stored URL.');
+      
+      return '';
+        
+    }
+    
+    $request = $this->getUserRequest($server, $protocol, $email);
+    return $request->getBody()->getContents();
+    
+  }
+  
+  /**
    * Makes the worker connect to the site endpoint.
    */
   public function querySiteEndpoint() {
@@ -92,6 +118,34 @@ class TCBServerConnectionWorker {
   public function queryUserEndpoint() {
     
     $this->endpoint = 'user';
+    
+  }
+  
+  /**
+   * Connects to TCB Server and queries the user endpoint for a user
+   * with the passed in email.
+   * @param string $server The host to connect to.
+   * @param string $protocol The protocol to use when connecting.
+   * @param string $email The email to search for.
+   * @return Psr\Http\Message\ResponseInterface
+   */
+  private function getUserRequest($server, $protocol, $email) {
+    
+    // Change the query endpoint to user if it's something else
+    if($this->endpoint != 'user') {
+      
+      $this->queryUserEndpoint();
+      
+    }
+    
+    // Make the connection, and return the connection object
+    $connection = \Drupal::httpClient();
+    $requestURL = $protocol . '://' . $server . 
+      '/api/v1/' . $this->endpoint . '?_format=json&email=' .
+      $email . 
+      '&time=' . time();
+    
+    return $connection->request('GET', $requestURL);
     
   }
   
