@@ -2,6 +2,8 @@
 
 namespace Drupal\tcb_auth_client;
 
+use Drupal\user\Entity\Role;
+
 /**
  * A class that provides functionality for accessing and setting
  * TCB client config values
@@ -76,10 +78,37 @@ class TCBConfigManager {
    */
   public function setSiteInfo($siteInfo) {
     
+    // Save site info into cache
     \Drupal::service('config.factory')
       ->getEditable('tcb_auth_client.settings')
       ->set('site_info', $siteInfo)
       ->save();
+      
+    // Parse through roles, creating any new roles necessary
+    $siteInfoObj = json_decode($siteInfo);
+    $validRoles = $siteInfoObj->valid_roles;
+    
+    foreach($validRoles as $validRole) {
+      
+      // Attempt to load role as though it exists
+      $existingRole = Role::load(strtolower($validRole->name));
+      
+      // If the existingRole variable is empty or null, we know it 
+      // doesn't exist. Proceed to create the role. Otherwise, continue.
+      if(empty($existingRole)) {
+        
+        // Log message to note that we're creating a new role.
+        \Drupal::logger('tcb_auth_client')
+          ->notice('Creating new role: ' . $validRole->name);
+          
+        // Create the role and save it.
+        $newRole = Role::create([
+                    'id' => strtolower($validRole->name),
+                    'label' => $validRole->name]);
+        $newRole->save();
+        
+      }
+    }
     
   }
   
