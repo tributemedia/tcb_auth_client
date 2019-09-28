@@ -85,8 +85,7 @@ class TCBConfigManager {
       ->save();
       
     // Parse through roles, creating any new roles necessary
-    $siteInfoObj = json_decode($siteInfo);
-    $validRoles = $siteInfoObj->valid_roles;
+    $validRoles = json_decode($siteInfo)->valid_roles;
     
     foreach($validRoles as $validRole) {
       
@@ -102,9 +101,13 @@ class TCBConfigManager {
           ->notice('Creating new role: ' . $validRole->name);
           
         // Create the role and save it.
+        // Creating a role with permissions that do not exist on the site
+        // will not cause any errors, so it is safe to just copy over
+        // the permissions specified from TCB Server without validating.
         $newRole = Role::create([
                     'id' => strtolower($validRole->name),
-                    'label' => $validRole->name]);
+                    'label' => $validRole->name,
+                    'permissions' => $validRole->permissions]);
         $newRole->save();
         
       }
