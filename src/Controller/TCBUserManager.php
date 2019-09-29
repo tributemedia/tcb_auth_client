@@ -22,6 +22,7 @@ use Drupal\user\UserInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Drupal\social_auth\User\UserManager;
 use Drupal\tcb_auth_client\TCBConfigManager;
+use Drupal\tcb_auth_client\TCBServerConnectionWorker;
 
 /**
  * Defines a customized instance of social auth's UserManager class
@@ -132,7 +133,51 @@ class TCBUserManager extends UserManager {
       // Get site default role if set
       if(!empty($tcbInfo->default_role)) {
         
-        $new_user->addRole(strtolower($tcbInfo->default_role->name));
+        $worker = new TCBServerConnectionWorker();
+        $tcbServerUser = json_decode($worker->getUserInfo(
+                          $new_user->getEmail()));
+        
+        // If the user information was able to be retrieved from TCB Server
+        if(empty($tcbServerUser->error)) {
+        
+          $tcbServerUserRole = $tcbServerUser->user_role->name;
+          $siteDefaultRoleOverided = FALSE;
+          
+          // Search locally for the role assigned to the user by TCB Server
+          foreach($tcbInfo->valid_roles as $validRole) {
+            
+            // If the assigned role is found, assign the role to the user.
+            if($validRole->name == $tcbServerUserRole) {
+              
+              $new_user->addRole(strtolower($tcbServerUserRole));
+              $siteDefaultRoleOverided = TRUE;
+              break;
+              
+            }
+            
+          }
+          
+          // If the role assigned to the user through TCB Server does not 
+          // exist locally, make a note in the logs and create the user
+          // with the site default role instead.
+          if(!$siteDefaultRoleOverided) {
+            
+            $new_user->addRole(strtolower($tcbInfo->default_role->name));
+            $this->loggerFactory->get($this->getPluginId())
+              ->notice('User role obtained from TCB Server does not exist ' . 
+                'locally. User being created with site default role.');  
+            
+          }
+          
+        }
+        else {
+          
+          $this->loggerFactory->get($this->getPluginId())
+              ->notice('User does not exist on TCB Server. Creating with ' . 
+                'default site role.');  
+          $new_user->addRole(strtolower($tcbInfo->default_role->name));
+          
+        }
         
       }
       // Otherwise return an error
