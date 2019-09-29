@@ -129,8 +129,22 @@ class TCBUserManager extends UserManager {
         ->getStorage('user')
         ->create($fields);
         
-      // Make users admins by default
-      $new_user->addRole('administrator');
+      // Get site default role if set
+      if(!empty($tcbInfo->default_role)) {
+        
+        $new_user->addRole(strtolower($tcbInfo->default_role->name));
+        
+      }
+      // Otherwise return an error
+      else {
+        
+        $this->loggerFactory->get($this->getPluginId())
+          ->warning('TCB Site default role not set. It must be set before ' . 
+            'a user may be created.');  
+        $this->messenger->addError('You are not allowed to create an ' . 
+          'account on this site.');
+        return FALSE;
+      }
       
       $new_user->save();
       
