@@ -78,6 +78,9 @@ class TCBConfigManager {
    */
   public function setSiteInfo($siteInfo) {
     
+    // Grab cached info
+    $cachedSiteInfo = json_decode($this->getSiteInfo());
+    
     // Save site info into cache
     \Drupal::service('config.factory')
       ->getEditable('tcb_auth_client.settings')
@@ -111,6 +114,43 @@ class TCBConfigManager {
         $newRole->save();
         
       }
+      // If the role already exists...
+      else {
+        
+        // Loop over each cached role, and see if the permissions
+        // are different.
+        // NOTE: Future optimization suggestion: Change this foreach 
+        // to something else so that we're not continuously re-iterating
+        // over the same array with each existing role encountered
+        foreach($cachedSiteInfo->valid_roles as $cachedRole) {
+          
+          if($cachedRole->name == $validRole->name) {
+            
+            // Check to see if the permissions are different by hashing
+            // the contents of the permissions arrays
+            $cachedRolePermissionsHash = hash('sha256', implode('', 
+                                          $cachedRole->permissions));
+            $validRolePermissionsHash = hash('sha256', implode('', 
+                                          $validRole->permissions));
+                 
+            // If the permissions are different, set the role permissions
+            // to the contents of what was retrieved from the server
+            if($cachedRolePermissionsHash != $validRolePermissionsHash) {
+              
+              $existingRole->set('permissions', $validRole->permissions);
+              $existingRole->save();
+              
+              \Drupal::logger('tcb_auth_client')
+                ->notice('Changed permissions on role: ' . $validRole->name);
+              
+            }
+            
+          }
+          
+        }
+        
+      }
+      
     }
     
   }
