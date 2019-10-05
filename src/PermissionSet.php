@@ -3,7 +3,6 @@
 namespace Drupal\tcb_auth_client;
 
 use Drupal\user\Entity\Role;
-use Drupal\tcb_auth_client\TCBConfigManager;
 
 class PermissionSet {
   

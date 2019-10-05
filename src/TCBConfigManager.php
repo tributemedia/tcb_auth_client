@@ -167,7 +167,6 @@ class TCBConfigManager {
       // attempt to parse the permission set.
       if(strpos($permission, '{') === FALSE) {
         
-        \Drupal::logger('tcb_auth_client')->notice('entering this bad boy');
         $tcbRole->grantPermission($permission);
         
       }

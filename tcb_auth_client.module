@@ -43,7 +43,7 @@ function restorePermissions() {
     
     $existingRole = Role::load(strtolower($validRole->name));
     
-    $existingRole->set('permissions', $validRole->permissions);
+    $tcbConfig->setTCBPermissions($validRole->permissions, $existingRole);
     $existingRole->save();
     
   }
