@@ -1,0 +1,27 @@
+<?php
+
+use Drupal\user\Entity\Role;
+use Drupal\tcb_auth_client\TCBConfigManager;
+
+/*
+ * Implements hook_uninstall
+ */
+function tcb_auth_client_uninstall() {
+  
+  $tcbConfig = new TCBConfigManager();
+  $tcbInfo = json_decode($tcbConfig->getSiteInfo());
+  
+  // Get all valid roles from the cache, and delete them from the site.
+  foreach($tcbInfo->valid_roles as $validRole) {
+    
+    $existingRole = Role::load(strtolower($validRole->name));
+    
+    if(!empty($existingRole)) {
+      
+      $existingRole->delete();
+      
+    }
+    
+  }
+  
+}
