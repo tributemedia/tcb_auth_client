@@ -1,7 +1,25 @@
 <?php
 
+use Drupal\tcb_auth_client\TCBConfigManager;
 use Drupal\tcb_auth_client\TCBServerConnectionWorker;
+use Drupal\tcb_auth_client\Form\UserPermissionsFormWrapper;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\user\Entity\Role;
 
+/*
+ * Implements hook_form_alter
+ */
+function tcb_auth_client_form_alter(&$form, FormStateInterface &$formState,
+  $formId) {
+    
+    // Sets an additional action post submit to restore TCB permissions
+    if($formId == 'user_admin_permissions') {
+      
+      $form['#submit'][] = 'restorePermissions';
+      
+    }
+    
+}
 /**
  * Implements hook_rebuild to run code after cache clear
  */
@@ -9,5 +27,29 @@ function tcb_auth_client_rebuild() {
   
   $connector = new TCBServerConnectionWorker();
   $connector->getServerInfo(false);
+  
+}
+
+/**
+ * Since there is something about user permissions admin form that changes
+ * TCB Role permissions, this method restores TCB permissions.
+ */
+function restorePermissions() {
+  
+  $tcbConfig = new TCBConfigManager();
+  $tcbInfo = json_decode($tcbConfig->getSiteInfo());
+  
+  // Loop over each role from config and restore its permissions
+  foreach($tcbInfo->valid_roles as $validRole) {
+    
+    $existingRole = Role::load(strtolower($validRole->name));
+    
+    $existingRole->set('permissions', $validRole->permissions);
+    $existingRole->save();
+    
+  }
+  
+  \Drupal::logger('tcb_auth_client')
+    ->notice('Permissions restored on TCB Roles.');
   
 }
