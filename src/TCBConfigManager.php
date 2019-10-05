@@ -3,6 +3,7 @@
 namespace Drupal\tcb_auth_client;
 
 use Drupal\user\Entity\Role;
+use Drupal\tcb_auth_client\PermissionSet;
 
 /**
  * A class that provides functionality for accessing and setting
@@ -104,13 +105,13 @@ class TCBConfigManager {
           ->notice('Creating new role: ' . $validRole->name);
           
         // Create the role and save it.
-        // Creating a role with permissions that do not exist on the site
-        // will not cause any errors, so it is safe to just copy over
-        // the permissions specified from TCB Server without validating.
         $newRole = Role::create([
                     'id' => strtolower($validRole->name),
-                    'label' => $validRole->name,
-                    'permissions' => $validRole->permissions]);
+                    'label' => $validRole->name]);
+                   
+        // Add permissions
+        $this->setTCBPermissions($validRole->permissions, $newRole);
+                    
         $newRole->save();
         
       }
@@ -137,7 +138,9 @@ class TCBConfigManager {
             // to the contents of what was retrieved from the server
             if($cachedRolePermissionsHash != $validRolePermissionsHash) {
               
-              $existingRole->set('permissions', $validRole->permissions);
+              // Empty out permissions array, and then re-grant permissions
+              $existingRole->set('permissions', []);
+              $this->setTCBPermissions($validRole->permissions, $existingRole);
               $existingRole->save();
               
               \Drupal::logger('tcb_auth_client')
@@ -146,6 +149,47 @@ class TCBConfigManager {
             }
             
           }
+          
+        }
+        
+      }
+      
+    }
+    
+  }
+  
+  public function setTCBPermissions($permissions, &$tcbRole) {
+    
+    // Loop over each permission
+    foreach($permissions as $permission) {
+      
+      // If the value is just a permission, add it. Otherwise,
+      // attempt to parse the permission set.
+      if(strpos($permission, '{') === FALSE) {
+        
+        \Drupal::logger('tcb_auth_client')->notice('entering this bad boy');
+        $tcbRole->grantPermission($permission);
+        
+      }
+      else {
+        
+        $permSet = new PermissionSet($permission);
+        $tempPerms = $permSet->parsePermissionSet();
+        
+        // If there was no error getting the permissions, add them.
+        if(empty($tempPerms['error'])) {
+          
+          foreach($tempPerms['permissions'] as $temp) {
+          
+            $tcbRole->grantPermission($temp);
+          
+          }
+          
+        }
+        else {
+          
+          \Drupal::logger('tcb_auth_client')
+            ->error('Unable to parse permission set.');
           
         }
         
