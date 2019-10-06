@@ -3,6 +3,8 @@
 namespace Drupal\tcb_auth_client;
 
 use Drupal\user\Entity\Role;
+use Drupal\tcb_auth_client\TCBConfigManager;
+use Drupal\tcb_auth_client\TCBServerConnectionWorker;
 
 class PermissionSet {
   
@@ -26,7 +28,17 @@ class PermissionSet {
    * validate or a role can't be found.
    * @return array
    */
-  public function parsePermissionSet(&$perms = []) {
+  public function parsePermissionSet(&$perms = [], &$iterations = 0) {
+    
+    // Only allow so many recursive calls of parsePermissionSet
+    if($iterations >= 5) {
+      
+      \Drupal::logger('tcb_auth_client')
+        ->error('No more than 5 nested permission sets are supported.');
+        
+      return ['permissions' => $perms];
+      
+    }
     
     // If not validated, validate. If validation fails, return error.
     if(!$this->validated) {
@@ -76,9 +88,81 @@ class PermissionSet {
     }
     else {
       
-      \Drupal::logger('tcb_auth_client')
-        ->error('Global key not implemented yet.');
-      return ['error' => 'Global key not implemented yet.'];
+      $roleToGet = $this->getSetValue();
+      $worker = new TCBServerConnectionWorker();
+      $globalRole = json_decode($worker->getRoleInfo($roleToGet));
+      
+      // If there was no error getting the information, continue. Otherwise,
+      // return an error.
+      if(empty($globalRole->error)) {
+        
+        $configManager = new TCBConfigManager();
+        $validRoles = json_decode($configManager->getSiteInfo())->valid_roles;
+        $isValidRole = FALSE;
+        
+        // Make sure the global role being pointed to is a valid role
+        foreach($validRoles as $validRole) {
+          
+          if($globalRole->name == $validRole->name) {
+            
+            $isValidRole = TRUE;
+            break;
+            
+          }
+          
+        }
+        
+        // If not a valid role, error out.
+        if(!$isValidRole) {
+          
+          \Drupal::logger('tcb_auth_client')
+            ->error('Attempt to retrieve permissions on invalid role: ' .
+              $globalRole->name);
+          return ['error' => 'Attempt to get permissions on invalid role.'];
+          
+        }
+        
+        // Loop over each permission in the role and add it. If another
+        // permission set is in the role's permissions, parse the permissions
+        // out of it and add them to the list.
+        foreach($globalRole->permissions as $permission) {
+          
+          if(strpos($permission, '{') === FALSE) {
+        
+            $perms[] = $permission;
+        
+          }
+          else {
+            
+            $nestedPermSet = new PermissionSet($permission);
+            $iterations += 1;
+            $checkForError = $nestedPermSet->parsePermissionSet($perms, 
+                              $iterations);
+              
+            // If an error was found parsing, return the error.
+            if(!empty($checkForError['error'])) {
+              
+              \Drupal::logger('tcb_auth_client')
+                ->error('Error parsing nested global permissions set.');
+              
+              return $checkForError;
+              
+            }
+            
+          }
+          
+        }
+        
+        return ['permissions' => $perms];
+        
+      }
+      else {
+        
+        \Drupal::logger('tcb_auth_client')
+          ->error($roleToGet . ' is not a TCB server role.');
+        return ['error' => $roleToGet . ' is not a TCB server role.'];
+        
+      }
       
     }
     
