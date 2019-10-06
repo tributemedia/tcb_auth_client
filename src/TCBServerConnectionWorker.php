@@ -104,6 +104,31 @@ class TCBServerConnectionWorker {
   }
   
   /**
+   * Gets the information about a TCB Role from the TCB server based on
+   * the name of the role passed in.
+   * @param string $name The name of the TCB Role to query the server for.
+   * @return JSONObject
+   */
+  public function getRoleInfo($name) {
+    
+    $server = $this->tcbConfig->getServerURL();
+    $protocol = $this->tcbConfig->getServerProtocol();
+      
+    if(empty($server)) {
+        
+      \Drupal::logger('tcb_auth_client')
+        ->error('Attempt to connect to server with no valid stored URL.');
+      
+      return '';
+        
+    }
+    
+    $request = $this->getRoleRequest($server, $protocol, $name);
+    return $request->getBody()->getContents();
+    
+  }
+  
+  /**
    * Makes the worker connect to the site endpoint.
    */
   public function querySiteEndpoint() {
@@ -118,6 +143,15 @@ class TCBServerConnectionWorker {
   public function queryUserEndpoint() {
     
     $this->endpoint = 'user';
+    
+  }
+  
+  /**
+   * Makes the worker connect to the role endpoint.
+   */
+  public function queryRoleEndpoint() {
+    
+    $this->endpoint = 'role';
     
   }
   
@@ -168,6 +202,32 @@ class TCBServerConnectionWorker {
     $requestURL = $protocol . '://' . $server . 
       '/api/v1/' . $this->endpoint . '?_format=json&name=' .
       $this->host . 
+      '&time=' . time();
+    
+    return $connection->request('GET', $requestURL);
+    
+  }
+  
+  /**
+   * Connects to TCB and returns request object for role request.
+   * @param string $server The host to connect to.
+   * @param string $protocol The protocol to use when connecting.
+   * @param string $name The name of the TCB Role to query.
+   * @return Psr\Http\Message\ResponseInterface 
+   */
+  private function getRoleRequest($server, $protocol, $name) {
+    
+    // If the worker is not set to query the role endpoint, change it.
+    if($this->endpoint != 'role') {
+      
+      $this->queryRoleEndpoint();
+      
+    }
+    
+    $connection = \Drupal::httpClient();
+    $requestURL = $protocol . '://' . $server . 
+      '/api/v1/' . $this->endpoint . '?_format=json&name=' .
+      $name . 
       '&time=' . time();
     
     return $connection->request('GET', $requestURL);
