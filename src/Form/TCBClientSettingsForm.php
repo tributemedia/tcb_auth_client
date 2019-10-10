@@ -34,13 +34,31 @@ class TCBClientSettingsForm extends ConfigFormBase {
     
     $config = new TCBConfigManager();
     $defaultProtocol = $config->getServerProtocol();
+    $siteConfigJSON = $config->getSiteInfo();
     
+    // If no default protocol is set, make it HTTP be default
     if(empty($defaultProtocol)) {
       
       $defaultProtocol = 'http';
       
     }
     
+    // If there is no config JSON, display text that informs the user
+    // Otherwise, format the JSON (pretty print the string) so that 
+    // it looks nice when displayed to the user.
+    if(empty($siteConfigJSON)) {
+      
+      $siteConfigJSON = 'No configuration information to display.';
+      
+    }
+    else {
+      
+      $siteConfigJSON = json_encode(json_decode($siteConfigJSON), 
+                          JSON_PRETTY_PRINT);
+      
+    }
+    
+    // Setup form fields
     $form['server_url'] = [
       '#type' => 'textfield',
       '#title' => 'TCB Server Domain',
@@ -56,6 +74,13 @@ class TCBClientSettingsForm extends ConfigFormBase {
         'http' => 'HTTP',
         'https' => 'HTTPS',
       ],
+    ];
+    
+    $form['config_json'] = [
+      '#type' => 'textarea',
+      '#title' => 'Config JSON',
+      '#default_value' => $siteConfigJSON,
+      '#disabled' => true,
     ];
     
     return parent::buildForm($form, $formState);

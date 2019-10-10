@@ -3,7 +3,7 @@ description: Customizes OAuth functionality based on TCB server configuration.
 package: TCB
 type: module
 core: 8.x
-version: 8.x-1.1-alpha
+version: 8.x-1.2-alpha
 dependencies:
   - drupal:social_api
   - drupal:social_auth
