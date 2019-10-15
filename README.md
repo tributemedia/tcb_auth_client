@@ -7,9 +7,9 @@ module.
 To install the module, first install the following dependencies with their
 corresponding versions:
 
-- Social API (8.x-2.0-rc1)
-- Social Auth (8.x-2.0-rc1)
-- Social Auth Google (8.x-2.0-beta4)
+- [Social API](https://www.drupal.org/project/social_api) (8.x-2.0-rc1)
+- [Social Auth](https://www.drupal.org/project/social_auth) (8.x-2.0-rc1)
+- [Social Auth Google](https://www.drupal.org/project/social_auth_google) (8.x-2.0-beta4)
 
 Follow the instructions that can be found in the following link to setup
 Social Auth Google to talk with Google's OAuth API: 
