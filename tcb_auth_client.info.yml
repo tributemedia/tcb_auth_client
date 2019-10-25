@@ -1,0 +1,10 @@
+name: TCB Client Module
+description: Customizes OAuth functionality based on TCB server configuration.
+package: TCB
+type: module
+core: 8.x
+version: 8.x-1.1.1-alpha
+dependencies:
+  - drupal:social_api
+  - drupal:social_auth
+  - drupal:social_auth_google

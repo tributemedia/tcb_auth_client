@@ -1,0 +1,6 @@
+tcb_auth_client.admin:
+  title: 'TCB Client'
+  description: 'Configure information used by TCB client.'
+  parent: system.admin_config_system
+  route_name: tcb_auth_client.settings
+  weight: 100
